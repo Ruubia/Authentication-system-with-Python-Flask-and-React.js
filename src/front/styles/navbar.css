@@ -1,0 +1,55 @@
+.menu {
+    transition: all 0.3s ease;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #2c3e50; /* Color azul oscuro */
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.menu.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.menu.closed {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 2rem;
+    color: #ecf0f1; /* Color gris claro */
+    background-color: #c0392b; /* Rojo oscuro */
+    cursor: pointer;
+}
+
+.close-button:hover {  
+    color: #f1c40f; /* Amarillo en hover */
+}
+
+.menu-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 50px; /* Ajusta según sea necesario */
+}
+
+.menu-item {
+    color: rgba(241, 196, 15, 0.8); /* Amarillo claro */
+    font-size: 2rem;
+    padding: 10px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.menu-item:hover {
+    color: #f1c40f; /* Amarillo brillante */
+}
