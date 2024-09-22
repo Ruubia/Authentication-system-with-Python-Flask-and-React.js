@@ -1,105 +1,135 @@
-// src/front/js/store/flux.js
+import { Navigate } from "react-router-dom";
 
 const getState = ({ getStore, getActions, setStore }) => {
-  return {
-    store: {
-      message: null,
-      demo: [
-        {
-          title: "FIRST",
-          background: "white",
-          initial: "white",
-        },
-        {
-          title: "SECOND",
-          background: "white",
-          initial: "white",
-        },
-      ],
-      user: null,
-      token: localStorage.getItem("token") || null, // Initialize from localStorage
-    },
-    actions: {
-      setUser: (user) => setStore({ user }),
-      setToken: (token) => {
-        setStore({ token });
-        if (token) {
-          localStorage.setItem("token", token);
-        } else {
-          localStorage.removeItem("token");
-        }
-      },
-      logout: () => {
-        setStore({ token: null, user: null });
-        localStorage.removeItem("token");
-      },
-      login: async (email, password) => {
-        try {
-          const response = await fetch(`${process.env.BACKEND_URL}/api/token`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-          });
+	return {
+		store: {
+			message: null,
+			demo: [
+				{
+					title: "FIRST",
+					background: "white",
+					initial: "white"
+				},
+				{
+					title: "SECOND",
+					background: "white",
+					initial: "white"
+				}
+			],
+			auth:false
+		},
+		actions: {
 
-          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(
-              data.message || "An error occurred. Please try again."
-            );
-          }
+			login: async (email, password) => {
+				const requestOptions = {
+					method: 'POST',
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						"email": email,
+						"password": password
+					})
+				};
+			
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/login", requestOptions);
+			
+					if (response.status !== 200) {
+						const errorData = await response.json();
+						return { success: false, message: errorData.msg || "Credenciales incorrectas" };
+					}
+						const data = await response.json();
+						localStorage.setItem("token", data.access_token);
+						setStore({ auth: true });
+						
+						return { success: true };  // Si el login es exitoso, devolvemos success: true
 
-          const data = await response.json();
-          setStore({ token: data.token });
-          localStorage.setItem("token", data.token);
-          return data;
-        } catch (error) {
-          console.log("Error during login:", error);
-          throw error;
-        }
-      },
-      signup: async (email, username, password) => {
-        try {
-          const response = await fetch(
-            `${process.env.BACKEND_URL}/api/signup`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, username, password }),
-            }
-          );
+				} catch (error) {
+					console.error('Error during login:', error);
+					return { success: false, message: "Error de conexión al servidor" };
+				}
+			},
+			
 
-          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(
-              data.message || "An error occurred. Please try again."
-            );
-          }
+			  logout: () => {
+				setStore({ auth: false});
+				localStorage.removeItem("token");
+			},
+			signup: async (email, password) => {
+				const requestOptions = {
+					method: 'POST',
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ email, password })
+				};
+			
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/signup", requestOptions);
+			
+					if (response.status !== 200) {
+						const errorData = await response.json();
+						return { success: false, message: errorData.msg || "Error en el registro" };
+					}
+			
+					const data = await response.json();
+					console.log("Registro exitoso:", data.msg);
+					return { success: true };
+					
+				} catch (error) {
+					console.error("Error during signup:", error);
+					return { success: false, message: "Error de conexión al servidor" };
+				}
+			},
 
-          const data = await response.json();
-          setStore({ user: data.user });
-          return data;
-        } catch (error) {
-          console.log("Error during signup:", error);
-          throw error;
-        }
-      },
-      getMessage: async () => {
-        try {
-          const resp = await fetch(`${process.env.BACKEND_URL}/api/hello`);
-          if (!resp.ok) {
-            throw new Error("Network response was not ok.");
-          }
-          const data = await resp.json();
-          setStore({ message: data.message });
-          return data;
-        } catch (error) {
-          console.log("Error loading message from backend", error);
-          return null; // or throw error if you want to propagate it
-        }
-      },
-      // Add more actions here
-    },
-  };
+			verifyToken: async () => {
+				const token = localStorage.getItem("token");
+			
+				if (!token) {
+					setStore({ auth: false });
+					return false;  // No hay token, el usuario no está autenticado
+				}
+			
+				const requestOptions = {
+					method: 'GET',
+					headers: { 
+						"Content-Type": "application/json",
+						"Authorization": `Bearer ${token}`  // Enviamos el token en el header
+					}
+				};
+			
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/paginaprivada", requestOptions);
+			
+					if (response.status === 200) {
+						setStore({ auth: true });
+						return true;  // Token válido, usuario autenticado
+					} else {
+						localStorage.removeItem("token");
+						setStore({ auth: false });
+						return false;  // Token inválido o expirado
+					}
+				} catch (error) {
+					console.error('Error verifying token:', error);
+					setStore({ auth: false });
+					return false;
+				}
+			},
+			
+			
+			changeColor: (index, color) => {
+				//get the store
+				const store = getStore();
+
+				//we have to loop the entire demo array to look for the respective index
+				//and change its color
+				const demo = store.demo.map((elm, i) => {
+					if (i === index) elm.background = color;
+					return elm;
+				});
+
+				//reset the global store
+				setStore({ demo: demo });
+			}
+		}
+	};
 };
 
 export default getState;
