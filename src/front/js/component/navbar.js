@@ -1,58 +1,66 @@
-// src/front/js/component/navbar.js
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { Context } from "../store/appContext";
 import { Link, useNavigate } from "react-router-dom";
-import { Login } from "./login"; // Import the Login component
+import 'bootstrap/dist/css/bootstrap.min.css'; // Asegúrate de importar Bootstrap
+import "../../styles/navbar.css";
 
-export const Navbar = ({ isAuthenticated, onLogout, onLoginSuccess }) => {
-  const [showDropdown, setShowDropdown] = useState(false);
-  const navigate = useNavigate();
+export const Navbar = () => {
+    const { store, actions } = useContext(Context);
+    const navigate = useNavigate(); // Usar useNavigate para redirigir
+    const [open, setOpen] = useState(false); // Estado para manejar la apertura del menú
 
-  const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove token from localStorage
-    onLogout(); // Update the authentication state
-    navigate("/"); // Redirect to home page
-  };
+    const handleLogout = () => {
+        actions.logout();
+        setOpen(false); // Ocultar el menú
+        navigate("/logoutOk"); // Redirigir a la página de despedida
+    };
 
-  return (
-    <nav className="navbar navbar-light bg-light">
-      <div className="container">
-        <Link to="/">
-          <span className="navbar-brand mb-0 h1">React Boilerplate</span>
-        </Link>
-        <div className="ml-auto">
-          <Link to="/private">
-            <button className="btn btn-primary">Private</button>
-          </Link>
-          {isAuthenticated ? (
-            <button className="btn btn-secondary ml-2" onClick={handleLogout}>
-              Logout
-            </button>
-          ) : (
-            <div
-              className="dropdown"
-              style={{ display: "inline-block", marginLeft: "10px" }}
-            >
-              <button
-                className="btn btn-secondary dropdown-toggle"
-                type="button"
-                id="dropdownMenuButton"
-                aria-expanded={showDropdown ? "true" : "false"}
-                style={{ width: "200px" }}
-                onClick={() => setShowDropdown(!showDropdown)}
-              >
-                Login
-              </button>
-              <div
-                className={`dropdown-menu ${showDropdown ? "show" : ""}`}
-                aria-labelledby="dropdownMenuButton"
-                style={{ padding: "20px", width: "300px" }}
-              >
-                <Login onLoginSuccess={onLoginSuccess} />
-              </div>
+    const toggleMenu = () => {
+        setOpen(prevState => !prevState); // Cambiar el estado del menú
+    };
+
+    return (
+        <>
+            <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+                <div className="container d-flex justify-content-between align-items-center">
+                    {/* Link 'Bienvenido' a la izquierda */}
+                    <Link to="/" className="navbar-brand">
+                        <h1 className="text-light">Bienvenido</h1>
+                    </Link>
+                    
+                    {/* Solo mostrar el botón de menú si el usuario está autenticado */}
+                    {store.auth === true && (
+                        <button 
+                            onClick={toggleMenu} 
+                            className="btn btn-light"
+                        >
+                            Menu
+                        </button>
+                    )}
+                </div>
+            </nav>
+
+            {/* Menú desplegable */}
+            <div className={`menu ${open ? "open" : "closed"}`}>
+                {open && (
+                    <>
+                        <button
+                            aria-label="Close"
+                            className="close-button"
+                            onClick={toggleMenu}
+                        >
+                            &times;
+                        </button>
+                        <div className="menu-container">
+                            <Link to="/" className="menu-item">Home</Link>
+                            <Link to="/contact" className="menu-item">About us</Link>
+                            <Link to="/services" className="menu-item">Services</Link>
+                            {/* Botón de logout dentro del menú */}
+                            <button onClick={handleLogout} className="menu-item btn btn-danger">Logout</button>
+                        </div>
+                    </>
+                )}
             </div>
-          )}
-        </div>
-      </div>
-    </nav>
-  );
+        </>
+    );
 };
